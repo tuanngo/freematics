@@ -1200,7 +1200,7 @@ void loadConfig()
 void processBLE(int timeout)
 {
 #if ENABLE_BLE
-  static byte echo = 0;
+  static byte echo = 1;
   char* cmd;
   if (!(cmd = ble_recv_command(timeout))) {
     return;
@@ -1211,11 +1211,14 @@ void processBLE(int timeout)
   char buf[48];
   int bufsize = sizeof(buf);
   int n = 0;
-  if (echo) n += snprintf(buf + n, bufsize - n, "%s\r", cmd);
+  if (echo) {
+        n = snprintf(buf, bufsize, "%s\r", cmd);
+  }
+
   Serial.print("[BLE] ");
   Serial.print(cmd);
   if (!strcmp(cmd, "UPTIME") || !strcmp(cmd, "TICK")) {
-    n += snprintf(buf + n, bufsize - n, "%lu", millis());
+    n += snprintf(buf + n, bufsize - n, "%u", millis());
   } else if (!strcmp(cmd, "BATT")) {
     n += snprintf(buf + n, bufsize - n, "%.2f", (float)(analogRead(A0) * 42) / 4095);
   } else if (!strcmp(cmd, "RESET")) {
@@ -1318,6 +1321,8 @@ void processBLE(int timeout)
       }
     }
   } else if (!strcmp(cmd, "VIN")) {
+    ble_send_response(buf, n, 0);
+    n = 0;
     n += snprintf(buf + n, bufsize - n, "%s", vin[0] ? vin : "N/A");
   } else if (!strcmp(cmd, "LAT") && gd) {
     n += snprintf(buf + n, bufsize - n, "%f", gd->lat);
